@@ -189,8 +189,8 @@ private:
             exit_armed_ = view_model_.current_page() == model::AppPage::Apple;
             if (exit_armed_) {
                 toast_->show_persistent_highlighted("Hold ",
-                                                    "ESC/4",
-                                                    " to Exit",
+                                                    "ESC",
+                                                    " to exit",
                                                     view::widgets::ToastTone::Warning);
             }
         }
