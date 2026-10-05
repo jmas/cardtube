@@ -27,27 +27,24 @@ public:
     void build() override;
 
 private:
-    void create_icon_buttons();
-    void create_shortcut_hints();
-    void update_icon_buttons();
+    struct ActionSlot {
+        NavBar* bar{nullptr};
+        int index{0};
+    };
 
-    static void toggle_theme_cb(lv_event_t* event);
-    static void toggle_page_cb(lv_event_t* event);
-    static void toggle_bold_text_cb(lv_event_t* event);
-    static void increment_counter_cb(lv_event_t* event);
-    static void decrement_counter_cb(lv_event_t* event);
-    static void show_info_cb(lv_event_t* event);
-    static void request_quit_cb(lv_event_t* event);
-    static void update_icons_cb(lv_observer_t* observer, lv_subject_t* subject);
+    void create_icon_buttons();
+    void update_icons();
+    void handle_action(int index);
+    const char* icon_for(int index, bool& enabled);
+
+    static void action_cb(lv_event_t* event);
+    static void update_cb(lv_observer_t* observer, lv_subject_t* subject);
 
     viewmodel::BaseViewModel& view_model_;
     app::AssetManager& assets_;
     std::array<std::unique_ptr<IconButton>, 5> icon_buttons_;
-    std::array<lv_obj_t*, 3> shortcut_key_labels_{};
+    std::array<ActionSlot, 5> action_slots_{};
     lv_font_t* icon_font_{nullptr};
-    lv_obj_t* shortcut_bar_{nullptr};
-    lv_observer_t* page_observer_{nullptr};
-    lv_observer_t* theme_observer_{nullptr};
 };
 
 } // namespace view::widgets

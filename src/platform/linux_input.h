@@ -17,6 +17,7 @@ using GlobalKeyListener = bool (*)(uint32_t key,
                                    const char* key_name,
                                    bool long_pressed,
                                    void* user_data);
+using ScrollListener = void (*)(int delta, void* user_data);
 
 void init_key_input(lv_display_t* display);
 void attach_key_router(lv_indev_t* indev);
@@ -27,6 +28,10 @@ void set_key_release_listener(KeyReleaseListener listener, void* user_data);
 void clear_key_release_listener(KeyReleaseListener listener, void* user_data);
 void set_global_key_listener(GlobalKeyListener listener, void* user_data);
 void clear_global_key_listener(GlobalKeyListener listener, void* user_data);
+void set_scroll_listener(ScrollListener listener, void* user_data);
+void clear_scroll_listener(ScrollListener listener, void* user_data);
+// delta: -1 = up, +1 = down.
+void emit_scroll(int delta);
 const char* describe_key(uint32_t key);
 
 } // namespace platform

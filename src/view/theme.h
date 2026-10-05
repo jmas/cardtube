@@ -28,6 +28,7 @@ struct ThemePalette {
     lv_color_t success;
     lv_color_t warning;
     lv_color_t error;
+    lv_color_t active;
 };
 
 ThemePalette palette(bool dark_mode);

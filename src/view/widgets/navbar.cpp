@@ -12,46 +12,18 @@
 #include "theme.h"
 #include "ui_const.h"
 
+#include <cstring>
+
 namespace view::widgets {
-namespace {
-
-struct IconSpec {
-    const char* text;
-    lv_event_cb_t click_cb;
-};
-
-constexpr std::array<int32_t, 5> kNavButtonXOffsets = {30, 17, 2, -15, -30};
-
-struct ShortcutSpec {
-    const char* key;
-    const char* action;
-};
-
-constexpr std::array<ShortcutSpec, 3> kButterShortcuts = {{
-    {"ESC", "Back"},
-    {"Z/Left", "Less"},
-    {"C/Right", "More"},
-}};
-
-} // namespace
 
 NavBar::NavBar(lv_obj_t* parent, viewmodel::BaseViewModel& view_model, app::AssetManager& assets)
     : BaseWidgets(parent), view_model_(view_model), assets_(assets) {}
 
 NavBar::~NavBar() {
-    for (size_t i = 0; i < icon_buttons_.size(); ++i) {
+    for (std::size_t i = 0; i < icon_buttons_.size(); ++i) {
         if (icon_buttons_[i]) {
             platform::unregister_nav_button(i, icon_buttons_[i]->root());
         }
-    }
-
-    if (page_observer_) {
-        lv_observer_remove(page_observer_);
-        page_observer_ = nullptr;
-    }
-    if (theme_observer_) {
-        lv_observer_remove(theme_observer_);
-        theme_observer_ = nullptr;
     }
 }
 
@@ -62,68 +34,35 @@ void NavBar::build() {
 
     core_obj_ = lv_obj_create(parent_);
     lv_obj_remove_style_all(core_obj_);
-    lv_obj_set_size(core_obj_, LV_PCT(100), kNavBarHeight);
+    lv_obj_set_size(core_obj_, LV_PCT(100), view::kNavBarHeight);
     lv_obj_align(core_obj_, LV_ALIGN_BOTTOM_MID, 0, 0);
     lv_obj_clear_flag(core_obj_, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_flex_flow(core_obj_, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(core_obj_, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_left(core_obj_, 8, 0);
-    lv_obj_set_style_pad_right(core_obj_, 8, 0);
+    lv_obj_set_style_pad_left(core_obj_, 12, 0);
+    lv_obj_set_style_pad_right(core_obj_, 12, 0);
     reactive::bind_theme(core_obj_, view_model_.dark_mode_subject(), reactive::ThemeRole::Bar);
 
     create_icon_buttons();
-    create_shortcut_hints();
-    page_observer_ = reactive::observe_obj(core_obj_, view_model_.current_page_subject(), update_icons_cb, this);
-    theme_observer_ = reactive::observe_obj(core_obj_, view_model_.dark_mode_subject(), update_icons_cb, this);
-    update_icon_buttons();
-}
 
-void NavBar::create_shortcut_hints() {
-    shortcut_bar_ = lv_obj_create(core_obj_);
-    lv_obj_remove_style_all(shortcut_bar_);
-    lv_obj_set_size(shortcut_bar_, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_flex_flow(shortcut_bar_, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(shortcut_bar_, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_hor(shortcut_bar_, 10, 0);
-    lv_obj_clear_flag(shortcut_bar_, LV_OBJ_FLAG_SCROLLABLE);
-
-    const lv_font_t* key_font = assets_.load_standard_font(14);
-    if (!key_font) {
-        key_font = &lv_font_montserrat_14;
-    }
-    const lv_font_t* text_font = assets_.load_standard_font(14, app::StandardFontWeight::Regular);
-    if (!text_font) {
-        text_font = &lv_font_montserrat_14;
-    }
-
-    for (size_t index = 0; index < kButterShortcuts.size(); ++index) {
-        const auto& shortcut = kButterShortcuts[index];
-        auto* item = lv_obj_create(shortcut_bar_);
-        lv_obj_remove_style_all(item);
-        lv_obj_set_size(item, LV_SIZE_CONTENT, LV_PCT(100));
-        lv_obj_set_flex_flow(item, LV_FLEX_FLOW_ROW);
-        lv_obj_set_flex_align(item, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-        lv_obj_set_style_pad_column(item, 3, 0);
-        lv_obj_clear_flag(item, LV_OBJ_FLAG_SCROLLABLE);
-
-        auto* key = lv_label_create(item);
-        lv_label_set_text(key, shortcut.key);
-        lv_obj_set_style_text_font(key, key_font, 0);
-        shortcut_key_labels_[index] = key;
-
-        auto* label = lv_label_create(item);
-        lv_label_set_text(label, shortcut.action);
-        lv_obj_set_style_text_font(label, text_font, 0);
-        reactive::bind_theme(label, view_model_.dark_mode_subject(), reactive::ThemeRole::Text);
-    }
+    reactive::observe_obj(core_obj_, view_model_.current_page_subject(), update_cb, this);
+    reactive::observe_obj(core_obj_, view_model_.dark_mode_subject(), update_cb, this);
+    reactive::observe_obj(core_obj_, view_model_.player_state_subject(), update_cb, this);
+    reactive::observe_obj(core_obj_, view_model_.busy_subject(), update_cb, this);
+    reactive::observe_obj(core_obj_, view_model_.channels_revision_subject(), update_cb, this);
+    reactive::observe_obj(core_obj_, view_model_.videos_revision_subject(), update_cb, this);
+    reactive::observe_obj(core_obj_, view_model_.storage_revision_subject(), update_cb, this);
+    reactive::observe_obj(core_obj_, view_model_.selection_revision_subject(), update_cb, this);
+    update_icons();
 }
 
 void NavBar::create_icon_buttons() {
     const auto light_color = view::palette(false).text;
     const auto dark_color = view::palette(true).text;
-    icon_font_ = assets_.load_font("Phosphor-Fill.ttf", 22);
+    icon_font_ = assets_.load_font("Phosphor-Fill.ttf", 20);
 
-    for (size_t i = 0; i < icon_buttons_.size(); ++i) {
+    for (std::size_t i = 0; i < icon_buttons_.size(); ++i) {
+        action_slots_[i] = ActionSlot{this, static_cast<int>(i)};
         icon_buttons_[i] = std::make_unique<IconButton>(core_obj_,
                                                         view_model_,
                                                         32,
@@ -132,140 +71,219 @@ void NavBar::create_icon_buttons() {
                                                         icon_font_ ? icon_font_ : &lv_font_montserrat_14,
                                                         light_color,
                                                         dark_color,
-                                                        nullptr,
-                                                        &view_model_,
-                                                        true);
+                                                        action_cb,
+                                                        &action_slots_[i],
+                                                        false);
         icon_buttons_[i]->build();
-        lv_obj_set_style_translate_x(icon_buttons_[i]->root(), kNavButtonXOffsets[i], 0);
         platform::register_nav_button(i, icon_buttons_[i]->root());
     }
 }
 
-void NavBar::update_icon_buttons() {
-    const bool is_butter_page = view_model_.current_page() == model::AppPage::Butter;
-    const bool is_dark_mode = view_model_.is_dark_mode();
-    const auto colors = view::palette(is_dark_mode);
-    const char* theme_icon = is_dark_mode ? ICON_SUN : ICON_MOON;
-    /* nav bar icons showed on apple screen */
-    const std::array<IconSpec, 5> apple_icons = {{
-        {ICON_SIGN_OUT, request_quit_cb},
-        {ICON_TEXT_BOLD, toggle_bold_text_cb},
-        {theme_icon, toggle_theme_cb},
-        {ICON_INFO, show_info_cb},
-        {ICON_SQUARE_ARROW_RIGHT, toggle_page_cb},
-    }};
-    /* Hidden action targets for the shortcut keys shown on the butter screen. */
-    const std::array<IconSpec, 5> butter_icons = {{
-        {"", nullptr},
-        {"", decrement_counter_cb},
-        {"", nullptr},
-        {"", increment_counter_cb},
-        {"", toggle_page_cb},
-    }};
+const char* NavBar::icon_for(int index, bool& enabled) {
+    enabled = true;
+    const auto page = view_model_.current_page();
 
-    platform::set_nav_shortcut_mode(is_butter_page);
-    for (auto* key_label : shortcut_key_labels_) {
-        if (key_label) {
-            lv_obj_set_style_text_color(key_label, colors.primary, 0);
-        }
-    }
-    if (shortcut_bar_) {
-        if (is_butter_page) {
-            lv_obj_remove_flag(shortcut_bar_, LV_OBJ_FLAG_HIDDEN);
-        }
-        else {
-            lv_obj_add_flag(shortcut_bar_, LV_OBJ_FLAG_HIDDEN);
+    // Consistent layout across pages:
+    //   4 = back / add   5 = refresh   6 = open / play
+    //   7 = download / remove / delete   8 = player / info
+    if (page == model::AppPage::Channels) {
+        const bool empty = view_model_.channels().empty();
+        switch (index) {
+            case 0:
+                return view::ICON_PLUS;
+            case 1:
+                enabled = !empty;
+                return view::ICON_REFRESH;
+            case 2:
+                // Center button: shows the playing indicator (pause) when THIS
+                // channel is playing, otherwise the open-channel action.
+                if (view_model_.selected_channel_is_playing()) {
+                    return view::ICON_MUSIC_NOTES;
+                }
+                enabled = !empty;
+                return view::ICON_FOLDER;
+            case 3:
+                enabled = !empty;
+                return view::ICON_TRASH;
+            case 4:
+                return view::ICON_INFO;
+            default:
+                enabled = false;
+                return "";
         }
     }
 
-    const auto& icons = is_butter_page ? butter_icons : apple_icons;
-    for (size_t i = 0; i < icon_buttons_.size(); ++i) {
+    if (page == model::AppPage::Videos) {
+        const auto& videos = view_model_.videos();
+        const int selected = view_model_.selected_video();
+        const bool has_selection = selected >= 0 && selected < static_cast<int>(videos.size());
+        const bool downloaded =
+            has_selection && videos[selected].download_state == model::DownloadState::Done;
+        switch (index) {
+            case 0:
+                return view::ICON_ARROW_LEFT;
+            case 1:
+                return view::ICON_REFRESH;
+            case 2:
+                if (!has_selection) {
+                    enabled = false;
+                    return "";
+                }
+                enabled = true;
+                // Playing -> pause; downloaded -> play; otherwise -> download.
+                if (view_model_.is_video_playing(selected)) {
+                    return view::ICON_MUSIC_NOTES;
+                }
+                return downloaded ? view::ICON_PLAY : view::ICON_DOWNLOAD;
+            case 3:
+                enabled = downloaded;
+                return view::ICON_TRASH;
+            case 4:
+                enabled = false;
+                return "";
+            default:
+                enabled = false;
+                return "";
+        }
+    }
+
+    // Storage & info page.
+    if (page == model::AppPage::Storage) {
+        const bool has_downloads = !view_model_.downloads().empty();
+        switch (index) {
+            case 0:
+                return view::ICON_ARROW_LEFT;
+            case 1:
+                return view::ICON_REFRESH;
+            case 3:
+                enabled = has_downloads;
+                return view::ICON_TRASH;
+            default:
+                enabled = false;
+                return "";
+        }
+    }
+
+    // Player page (media transport).
+    switch (index) {
+        case 0:
+            return view::ICON_ARROW_LEFT;
+        case 1:
+            return view::ICON_SKIP_BACK;
+        case 2: {
+            const bool playing = view_model_.playback_state() == model::PlaybackState::Playing;
+            return playing ? view::ICON_PAUSE : view::ICON_PLAY;
+        }
+        case 3:
+            return view::ICON_SKIP_FORWARD;
+        case 4:
+            enabled = false;
+            return "";
+        default:
+            enabled = false;
+            return "";
+    }
+}
+
+void NavBar::update_icons() {
+    const auto colors = view::palette(view_model_.is_dark_mode());
+    for (std::size_t i = 0; i < icon_buttons_.size(); ++i) {
         auto& button = icon_buttons_[i];
         if (!button) {
             continue;
         }
-
-        button->set_text(icons[i].text);
-        if (button->root()) {
-            if (is_butter_page) {
-                lv_obj_add_flag(button->root(), LV_OBJ_FLAG_HIDDEN);
-            }
-            else {
-                lv_obj_remove_flag(button->root(), LV_OBJ_FLAG_HIDDEN);
-            }
-            lv_obj_remove_event_cb(button->root(), toggle_theme_cb);
-            lv_obj_remove_event_cb(button->root(), toggle_page_cb);
-            lv_obj_remove_event_cb(button->root(), toggle_bold_text_cb);
-            lv_obj_remove_event_cb(button->root(), increment_counter_cb);
-            lv_obj_remove_event_cb(button->root(), decrement_counter_cb);
-            lv_obj_remove_event_cb(button->root(), show_info_cb);
-            lv_obj_remove_event_cb(button->root(), request_quit_cb);
-            if (icons[i].click_cb) {
-                lv_obj_add_event_cb(button->root(), icons[i].click_cb, LV_EVENT_CLICKED, &view_model_);
-                button->set_enabled(true);
-            }
-            else {
-                button->set_enabled(false);
+        bool enabled = true;
+        const char* icon = icon_for(static_cast<int>(i), enabled);
+        button->set_text(icon ? icon : "");
+        button->set_enabled(enabled && icon && icon[0] != '\0');
+        if (icon && std::strcmp(icon, view::ICON_MUSIC_NOTES) == 0) {
+            if (auto* label = lv_obj_get_child(button->root(), 0)) {
+                lv_obj_set_style_text_color(label, colors.active, 0);
             }
         }
     }
 }
 
-void NavBar::toggle_theme_cb(lv_event_t* event) {
-    auto* view_model = static_cast<viewmodel::BaseViewModel*>(lv_event_get_user_data(event));
-    if (view_model) {
-        view_model->toggle_dark_mode();
+void NavBar::handle_action(int index) {
+    switch (view_model_.current_page()) {
+        case model::AppPage::Channels:
+            if (index == 0) {
+                view_model_.request_add_channel();
+            }
+            else if (index == 1) {
+                view_model_.refresh_videos();
+            }
+            else if (index == 2) {
+                if (view_model_.selected_channel_is_playing()) {
+                    view_model_.show_player();
+                }
+                else {
+                    view_model_.open_selected_channel();
+                }
+            }
+            else if (index == 3) {
+                view_model_.request_remove_channel();
+            }
+            else if (index == 4) {
+                view_model_.show_storage();
+            }
+            break;
+        case model::AppPage::Videos:
+            if (index == 0) {
+                view_model_.show_channels();
+            }
+            else if (index == 1) {
+                view_model_.refresh_videos();
+            }
+            else if (index == 2) {
+                // Opens the player for the current track, plays a downloaded
+                // one, or downloads+plays otherwise (never stops).
+                view_model_.play_selected();
+            }
+            else if (index == 3) {
+                view_model_.request_delete_video();
+            }
+            break;
+        case model::AppPage::Storage:
+            if (index == 0) {
+                view_model_.show_channels();
+            }
+            else if (index == 1) {
+                view_model_.refresh_storage();
+            }
+            else if (index == 3) {
+                view_model_.delete_selected_download();
+            }
+            break;
+        case model::AppPage::Player:
+            if (index == 0) {
+                view_model_.show_videos();
+            }
+            else if (index == 1) {
+                view_model_.previous_video();
+            }
+            else if (index == 2) {
+                view_model_.toggle_play_pause();
+            }
+            else if (index == 3) {
+                view_model_.next_video();
+            }
+            break;
     }
 }
 
-void NavBar::toggle_page_cb(lv_event_t* event) {
-    auto* view_model = static_cast<viewmodel::BaseViewModel*>(lv_event_get_user_data(event));
-    if (view_model) {
-        view_model->toggle_page();
+void NavBar::action_cb(lv_event_t* event) {
+    auto* slot = static_cast<ActionSlot*>(lv_event_get_user_data(event));
+    if (slot && slot->bar) {
+        slot->bar->handle_action(slot->index);
     }
 }
 
-void NavBar::toggle_bold_text_cb(lv_event_t* event) {
-    auto* view_model = static_cast<viewmodel::BaseViewModel*>(lv_event_get_user_data(event));
-    if (view_model) {
-        view_model->toggle_bold_text();
-    }
-}
-
-void NavBar::increment_counter_cb(lv_event_t* event) {
-    auto* view_model = static_cast<viewmodel::BaseViewModel*>(lv_event_get_user_data(event));
-    if (view_model) {
-        view_model->increment_counter();
-    }
-}
-
-void NavBar::decrement_counter_cb(lv_event_t* event) {
-    auto* view_model = static_cast<viewmodel::BaseViewModel*>(lv_event_get_user_data(event));
-    if (view_model) {
-        view_model->decrement_counter();
-    }
-}
-
-void NavBar::show_info_cb(lv_event_t* event) {
-    auto* view_model = static_cast<viewmodel::BaseViewModel*>(lv_event_get_user_data(event));
-    if (view_model) {
-        view_model->toggle_info();
-    }
-}
-
-void NavBar::request_quit_cb(lv_event_t* event) {
-    auto* view_model = static_cast<viewmodel::BaseViewModel*>(lv_event_get_user_data(event));
-    if (view_model) {
-        view_model->request_quit();
-    }
-}
-
-void NavBar::update_icons_cb(lv_observer_t* observer, lv_subject_t* subject) {
+void NavBar::update_cb(lv_observer_t* observer, lv_subject_t* subject) {
     LV_UNUSED(subject);
-
     auto* nav_bar = static_cast<NavBar*>(lv_observer_get_user_data(observer));
     if (nav_bar) {
-        nav_bar->update_icon_buttons();
+        nav_bar->update_icons();
     }
 }
 

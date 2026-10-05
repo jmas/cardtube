@@ -1,4 +1,4 @@
-#
+﻿#
 # SPDX-FileCopyrightText: 2026 M5Stack Technology CO LTD
 #
 # SPDX-License-Identifier: MIT
@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.31)
 
-project(template_app VERSION 0.2.1 LANGUAGES C CXX)
+project(cardtube VERSION 0.2.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,7 +20,7 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(USE_DESKTOP ON CACHE BOOL "Build the desktop emulator target with LVGL SDL support")
 set(APP_NAME "${PROJECT_NAME}" CACHE STRING "Application name used for installed asset lookup")
 set(APP_ASSETS_ROOT "" CACHE PATH "Optional runtime assets root. Expected subdirectories include fonts/")
-set(APP_CONFIG_FILE "" CACHE FILEPATH "Application config file; defaults to the repository file on desktop and /etc/template-app.conf on device")
+set(APP_CONFIG_FILE "" CACHE FILEPATH "Application config file; defaults to the repository file on desktop and /etc/cardtube.conf on device")
 set(APP_KEY_INPUT_DEVICE "" CACHE STRING "Optional Linux evdev keyboard/keypad device path, e.g. /dev/input/event0")
 set(APP_FRAMEBUFFER_DEVICE "/dev/fb0" CACHE STRING "Linux framebuffer device path used by embedded builds")
 set(APP_DRM_DEVICE "/dev/dri/card0" CACHE STRING "Linux DRM device path used when APP_USE_DRM=ON")
@@ -33,9 +33,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Export compile_commands.json" F
 
 if(NOT APP_CONFIG_FILE)
     if(USE_DESKTOP)
-        set(APP_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/config/template-app.conf")
+        set(APP_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/config/cardtube.conf")
     else()
-        set(APP_CONFIG_FILE "/etc/template-app.conf")
+        set(APP_CONFIG_FILE "/etc/cardtube.conf")
     endif()
 endif()
 
@@ -350,6 +350,9 @@ else()
         CM0::PNG
         CM0::JPEG
         ZLIB::ZLIB
+        "${CM0_SYSROOT}/usr/lib/aarch64-linux-gnu/libbrotlidec.a"
+        "${CM0_SYSROOT}/usr/lib/aarch64-linux-gnu/libbrotlicommon.a"
+        "${CM0_SYSROOT}/usr/lib/aarch64-linux-gnu/libbz2.a"
     )
     if(APP_USE_DRM)
         list(APPEND LVGL_INCLUDE_DIR
@@ -444,6 +447,7 @@ add_library(${PROJECT_NAME}_model
 target_include_directories(${PROJECT_NAME}_model
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/src/model"
+        ${PLATFORM_INCLUDE_DIR}
 )
 
 # ====================================================
@@ -631,3 +635,5 @@ target_link_libraries(${PROJECT_NAME}
 
 # Package deb
 include(cmake/cm0-package.cmake)
+
+

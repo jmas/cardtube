@@ -172,6 +172,8 @@
 #define LV_USE_LIST                        1
 #define LV_USE_TEXTAREA                    1
 #define LV_USE_KEYBOARD                    1
+
+#define LV_USE_BAR                         1
 #define LV_USE_FLEX                        1
 #define LV_USE_GRID                        1
 
@@ -179,7 +181,7 @@
    PERFORMANCE MONITOR
  *====================*/
 
-#define LV_USE_PERF_MONITOR                1
+#define LV_USE_PERF_MONITOR                0
 #define LV_USE_SYSMON                      1
 
 /*====================

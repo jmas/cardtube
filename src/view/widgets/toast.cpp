@@ -184,10 +184,14 @@ void Toast::update_label_text() {
         return;
     }
     if (highlighted_.empty()) {
+        // Plain messages may contain '#' (common in video titles); disable
+        // recolor so they are rendered literally.
+        lv_label_set_recolor(label_, false);
         lv_label_set_text(label_, (prefix_ + suffix_).c_str());
         return;
     }
 
+    lv_label_set_recolor(label_, true);
     const auto colors = view::palette(view_model_.is_dark_mode());
     lv_color_t highlight_color = colors.primary;
     if (tone_ == ToastTone::Success) {
@@ -225,7 +229,11 @@ void Toast::update_size() {
                      content_max_width,
                      LV_TEXT_FLAG_NONE);
 
-    const int32_t label_width = scroll_
+    // If the text wraps, the label must use the full measured width; using the
+    // longest line's width would re-wrap into more lines than we measured and
+    // clip the last line.
+    const bool multiline = !scroll_ && text_size.y > lv_font_get_line_height(font_);
+    const int32_t label_width = (scroll_ || multiline)
                                     ? content_max_width
                                     : std::clamp<int32_t>(text_size.x, 1, content_max_width);
     const int32_t toast_width = std::clamp<int32_t>(
@@ -245,6 +253,13 @@ void Toast::update_size() {
     lv_obj_align(core_obj_, LV_ALIGN_BOTTOM_MID, 0, -config_.bottom_offset);
     update_label_text();
     lv_obj_update_layout(label_);
+
+    // Safety net: grow the panel so the laid-out label can never be clipped.
+    const int32_t required_height = lv_obj_get_height(label_) + config_.vertical_padding * 2;
+    if (required_height > lv_obj_get_height(core_obj_)) {
+        lv_obj_set_height(core_obj_, required_height);
+        lv_obj_align(core_obj_, LV_ALIGN_BOTTOM_MID, 0, -config_.bottom_offset);
+    }
     lv_obj_center(label_);
 }
 

@@ -21,18 +21,36 @@ struct HelpRow {
     const char* action;
 };
 
-constexpr std::array<HelpRow, 5> kAppleRows = {{
-    {"HOLD ESC / 4", "Exit"},
-    {"5", "Text weight"},
-    {"6", "Light / dark"},
-    {"7", "Version info"},
-    {"8", "Open counter"},
+constexpr std::array<HelpRow, 5> kChannelsRows = {{
+    {"4", "Add channel"},
+    {"5", "Refresh videos"},
+    {"6", "Open / playing"},
+    {"7", "Remove channel"},
+    {"8", "Storage & info"},
 }};
 
-constexpr std::array<HelpRow, 3> kButterRows = {{
-    {"ESC", "Back to home"},
-    {"Z / LEFT", "Decrease"},
-    {"C / RIGHT", "Increase"},
+constexpr std::array<HelpRow, 5> kStorageRows = {{
+    {"UP / DOWN", "Select track"},
+    {"4", "Back to library"},
+    {"5", "Refresh stats"},
+    {"7", "Remove download"},
+    {"", ""},
+}};
+
+constexpr std::array<HelpRow, 5> kVideosRows = {{
+    {"4", "Back to library"},
+    {"5", "Refresh list"},
+    {"6", "Play / open"},
+    {"7", "Delete download"},
+    {"", ""},
+}};
+
+constexpr std::array<HelpRow, 5> kPlayerRows = {{
+    {"4", "Back to list"},
+    {"5", "Prev (hold: seek)"},
+    {"6", "Play / pause"},
+    {"7", "Next (hold: seek)"},
+    {"", ""},
 }};
 
 } // namespace
@@ -115,7 +133,7 @@ void HelpPopup::build() {
     }
 
     footer_ = lv_label_create(panel_);
-    lv_label_set_text(footer_, "HELP / ESC  Close   PRSC  Screenshot");
+    lv_label_set_text(footer_, "LEFT / RIGHT seek   H help   PRSC screenshot");
     lv_label_set_long_mode(footer_, LV_LABEL_LONG_CLIP);
     auto* footer_font = assets_.load_standard_font(10);
     lv_obj_set_style_text_font(footer_, footer_font ? footer_font : &lv_font_montserrat_10, 0);
@@ -156,18 +174,25 @@ bool HelpPopup::visible() const {
 }
 
 void HelpPopup::update_rows(model::AppPage page) {
-    const bool butter = page == model::AppPage::Butter;
-    lv_label_set_text(page_badge_, butter ? "COUNTER" : "HOME");
+    const std::array<HelpRow, 5>* rows = &kChannelsRows;
+    const char* badge = "LIBRARY";
+    if (page == model::AppPage::Videos) {
+        rows = &kVideosRows;
+        badge = "VIDEOS";
+    }
+    else if (page == model::AppPage::Player) {
+        rows = &kPlayerRows;
+        badge = "PLAYER";
+    }
+    else if (page == model::AppPage::Storage) {
+        rows = &kStorageRows;
+        badge = "STORAGE";
+    }
+
+    lv_label_set_text(page_badge_, badge);
     for (std::size_t i = 0; i < rows_.size(); ++i) {
-        const bool row_visible = butter ? i < kButterRows.size() : i < kAppleRows.size();
-        if (!row_visible) {
-            lv_obj_add_flag(rows_[i].row, LV_OBJ_FLAG_HIDDEN);
-            continue;
-        }
-        lv_obj_remove_flag(rows_[i].row, LV_OBJ_FLAG_HIDDEN);
-        const auto& row = butter ? kButterRows[i] : kAppleRows[i];
-        lv_label_set_text(rows_[i].key, row.key);
-        lv_label_set_text(rows_[i].action, row.action);
+        lv_label_set_text(rows_[i].key, (*rows)[i].key);
+        lv_label_set_text(rows_[i].action, (*rows)[i].action);
     }
 }
 

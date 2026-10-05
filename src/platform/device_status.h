@@ -23,4 +23,7 @@ struct DeviceStatus {
 
 DeviceStatus read_device_status();
 
+// True when at least one network interface (Wi-Fi or Ethernet) is connected.
+bool network_connected();
+
 } // namespace platform

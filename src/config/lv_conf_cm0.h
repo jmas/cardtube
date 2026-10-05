@@ -142,6 +142,8 @@
 #define LV_USE_TEXTAREA                    1
 #define LV_USE_KEYBOARD                    1
 
+#define LV_USE_BAR                         1
+
 /*====================
    PERFORMANCE
  *====================*/

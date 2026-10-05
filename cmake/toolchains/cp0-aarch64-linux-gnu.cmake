@@ -76,8 +76,8 @@ set(CMAKE_SYSROOT "${CM0_SDK_ROOT}" CACHE PATH "Sysroot used for CardputerZero c
 set(CMAKE_SYSROOT_COMPILE "${CMAKE_SYSROOT}" CACHE PATH "Compile sysroot used for CardputerZero cross builds" FORCE)
 set(CMAKE_SYSROOT_LINK "${CMAKE_SYSROOT}" CACHE PATH "Link sysroot used for CardputerZero cross builds" FORCE)
 
-find_program(_CP0_C_COMPILER NAMES aarch64-linux-gnu-gcc REQUIRED)
-find_program(_CP0_CXX_COMPILER NAMES aarch64-linux-gnu-g++ REQUIRED)
+find_program(_CP0_C_COMPILER NAMES aarch64-none-linux-gnu-gcc REQUIRED)
+find_program(_CP0_CXX_COMPILER NAMES aarch64-none-linux-gnu-g++ REQUIRED)
 set(CMAKE_C_COMPILER "${_CP0_C_COMPILER}" CACHE FILEPATH "aarch64 Linux C compiler" FORCE)
 set(CMAKE_CXX_COMPILER "${_CP0_CXX_COMPILER}" CACHE FILEPATH "aarch64 Linux C++ compiler" FORCE)
 set(CMAKE_LIBRARY_ARCHITECTURE "${CM0_MULTIARCH}")

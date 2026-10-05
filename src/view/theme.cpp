@@ -25,6 +25,7 @@ ThemePalette palette(bool dark_mode) {
             lv_color_hex(color::dark::kSuccess),
             lv_color_hex(color::dark::kWarning),
             lv_color_hex(color::dark::kError),
+            lv_color_hex(color::kYouTubeRed),
         };
     }
 
@@ -41,6 +42,7 @@ ThemePalette palette(bool dark_mode) {
         lv_color_hex(color::light::kSuccess),
         lv_color_hex(color::light::kWarning),
         lv_color_hex(color::light::kError),
+        lv_color_hex(color::kYouTubeRed),
     };
 }
 

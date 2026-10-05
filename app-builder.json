@@ -1,29 +1,35 @@
 {
-  "app_name": "Template",
-  "package_name": "template_app",
+  "app_name": "CardTube",
+  "package_name": "cardtube",
+  "bin_name": "cardtube",
   "version": "0.2.1",
-  "description": "Template Application for CardputerZero",
+  "description": "YouTube audio downloader and player for CardputerZero",
 
   "store": {
-    "summary": "TODO: one line about your app (placeholders are auto-rejected)",
-    "description": "TODO: a longer description for the store detail page. Every TODO field in this store section must be replaced before publishing — the store validator rejects unedited template metadata.",
-    "categories": ["TODO: pick 1-2 real categories from docs/APP_BUILDER_JSON.md"],
+    "summary": "Download and play YouTube audio on your CardputerZero.",
+    "description": "CardTube keeps a small library of YouTube channels. Add a channel with a link or @handle, browse its latest uploads, download the audio you like and play it right on the device. Downloaded videos are marked in the list, and the built-in player shows progress with play, pause, seek, previous and next. When a track ends it plays the next one automatically, downloading it first if needed; without internet it stays within the tracks you already downloaded.",
+    "categories": ["Media"],
     "screenshots": [
-      "screenshot/app-simulator-dark-darwin.png",
-      "screenshot/app-simulator-light-darwin.png"
+      "screenshots/channels.png",
+      "screenshots/videos.png",
+      "screenshots/player.png"
     ],
-    "icon": "assets/images/template.png",
-    "license": "TODO: an SPDX id, e.g. MIT",
-    "source_repo": "https://github.com/CardputerZero/Template",
-    "author": { "github": "TODO-your-github-login", "display_name": "TODO: Your Name" },
-    "share_code": "TODO",
+    "icon": "assets/images/cardtube.png",
+    "license": "MIT",
+    "source_repo": "https://github.com/jmas/cardtube",
+    "author": { "github": "jmas", "display_name": "Olex Maslakov" },
+    "share_code": "CTUB",
+    "locales": {
+      "zh-CN": { "summary": "在 CardputerZero 上下载并播放 YouTube 音频。" },
+      "ja": { "summary": "CardputerZero で YouTube の音声をダウンロードして再生します。" }
+    },
     "permissions": {
       "camera": false,
       "microphone": false,
       "imu": false,
-      "network": false,
+      "network": true,
       "additional_hardware": false,
-      "background_service": false,
+      "background_service": true,
       "external_display": false
     }
   }

@@ -6,8 +6,10 @@
 
 #include "screen_manager.h"
 
-#include "apple_screen.h"
-#include "butter_screen.h"
+#include "channels_screen.h"
+#include "player_screen.h"
+#include "storage_screen.h"
+#include "videos_screen.h"
 
 namespace app {
 namespace {
@@ -53,15 +55,27 @@ void ScreenManager::start() {
                                                          nullptr);
 }
 
-void ScreenManager::show_apple_screen() {
-    load_screen(std::make_unique<screen::AppleScreen>(view_model_, assets_));
-    loaded_page_ = model::AppPage::Apple;
+void ScreenManager::show_channels_screen() {
+    load_screen(std::make_unique<screen::ChannelsScreen>(view_model_, assets_));
+    loaded_page_ = model::AppPage::Channels;
     has_loaded_page_ = true;
 }
 
-void ScreenManager::show_butter_screen() {
-    load_screen(std::make_unique<screen::ButterScreen>(view_model_, assets_));
-    loaded_page_ = model::AppPage::Butter;
+void ScreenManager::show_videos_screen() {
+    load_screen(std::make_unique<screen::VideosScreen>(view_model_, assets_));
+    loaded_page_ = model::AppPage::Videos;
+    has_loaded_page_ = true;
+}
+
+void ScreenManager::show_player_screen() {
+    load_screen(std::make_unique<screen::PlayerScreen>(view_model_, assets_));
+    loaded_page_ = model::AppPage::Player;
+    has_loaded_page_ = true;
+}
+
+void ScreenManager::show_storage_screen() {
+    load_screen(std::make_unique<screen::StorageScreen>(view_model_, assets_));
+    loaded_page_ = model::AppPage::Storage;
     has_loaded_page_ = true;
 }
 
@@ -82,12 +96,21 @@ void ScreenManager::flush_requested_page() {
         return;
     }
 
-    if (requested_page_ == model::AppPage::Butter) {
-        show_butter_screen();
-        return;
+    switch (requested_page_) {
+        case model::AppPage::Videos:
+            show_videos_screen();
+            break;
+        case model::AppPage::Player:
+            show_player_screen();
+            break;
+        case model::AppPage::Storage:
+            show_storage_screen();
+            break;
+        case model::AppPage::Channels:
+        default:
+            show_channels_screen();
+            break;
     }
-
-    show_apple_screen();
 }
 
 lv_obj_t* ScreenManager::current_screen() const {

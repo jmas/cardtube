@@ -35,6 +35,8 @@ KeyReleaseListener key_release_listener = nullptr;
 void* key_release_listener_user_data = nullptr;
 GlobalKeyListener global_key_listener = nullptr;
 void* global_key_listener_user_data = nullptr;
+ScrollListener scroll_listener = nullptr;
+void* scroll_listener_user_data = nullptr;
 
 constexpr uint32_t kLongPressMs = 700;
 
@@ -184,6 +186,16 @@ void key_event_cb(lv_event_t* event) {
 
 #if !USE_DESKTOP
 uint32_t map_evdev_key(uint16_t code) {
+    if (code >= KEY_A && code <= KEY_Z) {
+        return static_cast<uint32_t>('a' + (code - KEY_A));
+    }
+    if (code >= KEY_1 && code <= KEY_9) {
+        return static_cast<uint32_t>('1' + (code - KEY_1));
+    }
+    if (code == KEY_0) {
+        return '0';
+    }
+
     switch (code) {
         case KEY_ESC:
             return LV_KEY_ESC;
@@ -191,20 +203,43 @@ uint32_t map_evdev_key(uint16_t code) {
             return LV_KEY_LEFT;
         case KEY_RIGHT:
             return LV_KEY_RIGHT;
-        case KEY_Z:
-            return 'z';
-        case KEY_C:
-            return 'c';
-        case KEY_4:
-            return '4';
-        case KEY_5:
-            return '5';
-        case KEY_6:
-            return '6';
-        case KEY_7:
-            return '7';
-        case KEY_8:
-            return '8';
+        case KEY_UP:
+            return LV_KEY_UP;
+        case KEY_DOWN:
+            return LV_KEY_DOWN;
+        case KEY_ENTER:
+        case KEY_KPENTER:
+            return LV_KEY_ENTER;
+        case KEY_BACKSPACE:
+            return LV_KEY_BACKSPACE;
+        case KEY_DELETE:
+            return LV_KEY_DEL;
+        case KEY_TAB:
+            return LV_KEY_NEXT;
+        case KEY_SPACE:
+            return ' ';
+        case KEY_DOT:
+            return '.';
+        case KEY_COMMA:
+            return ',';
+        case KEY_SLASH:
+            return '/';
+        case KEY_MINUS:
+            return '-';
+        case KEY_EQUAL:
+            return '=';
+        case KEY_SEMICOLON:
+            return ';';
+        case KEY_APOSTROPHE:
+            return '\'';
+        case KEY_GRAVE:
+            return '`';
+        case KEY_LEFTBRACE:
+            return '[';
+        case KEY_RIGHTBRACE:
+            return ']';
+        case KEY_BACKSLASH:
+            return '\\';
         case KEY_SYSRQ:
             return kKeyPrintScreen;
         case KEY_HELP:
@@ -408,6 +443,24 @@ void clear_global_key_listener(GlobalKeyListener listener, void* user_data) {
     if (global_key_listener == listener && global_key_listener_user_data == user_data) {
         global_key_listener = nullptr;
         global_key_listener_user_data = nullptr;
+    }
+}
+
+void set_scroll_listener(ScrollListener listener, void* user_data) {
+    scroll_listener = listener;
+    scroll_listener_user_data = user_data;
+}
+
+void clear_scroll_listener(ScrollListener listener, void* user_data) {
+    if (scroll_listener == listener && scroll_listener_user_data == user_data) {
+        scroll_listener = nullptr;
+        scroll_listener_user_data = nullptr;
+    }
+}
+
+void emit_scroll(int delta) {
+    if (scroll_listener && delta != 0) {
+        scroll_listener(delta, scroll_listener_user_data);
     }
 }
 

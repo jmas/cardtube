@@ -151,4 +151,9 @@ DeviceStatus read_device_status() {
 #endif
 }
 
+bool network_connected() {
+    const auto status = read_device_status();
+    return status.wifi_connected || status.ethernet_connected;
+}
+
 } // namespace platform

@@ -48,7 +48,6 @@ std::filesystem::path weakly_canonical_path(const std::filesystem::path& path) {
     return ec ? path.lexically_normal() : canonical;
 }
 
-#if !USE_DESKTOP
 const lv_font_t* fallback_font(uint32_t size) {
     if (size <= 10) {
         return &lv_font_montserrat_10;
@@ -73,7 +72,6 @@ const lv_font_t* fallback_font(uint32_t size) {
     }
     return &lv_font_montserrat_28;
 }
-#endif
 
 } // namespace
 
@@ -168,20 +166,21 @@ lv_font_t* AssetManager::load_font(const std::filesystem::path& file_name, uint3
 }
 
 lv_font_t* AssetManager::load_standard_font(uint32_t size, StandardFontWeight weight) {
+    const bool regular = weight == StandardFontWeight::Regular;
 #if USE_DESKTOP
-    LV_UNUSED(size);
-    LV_UNUSED(weight);
-    return nullptr;
+    // Desktop uses a bundled Unicode font (Latin, Greek, Cyrillic, ...).
+    auto* font = load_font(regular ? "NotoSans-Regular.ttf" : "NotoSans-Medium.ttf", size);
 #else
-    const char* path = weight == StandardFontWeight::Regular
-                           ? kNotoSansCjkRegular
-                           : kNotoSansCjkBold;
-    auto* font = load_font(path, size);
+    auto* font = load_font(regular ? kNotoSansCjkRegular : kNotoSansCjkBold, size);
+    if (!font) {
+        // Fall back to the bundled font when the system CJK font is missing.
+        font = load_font(regular ? "NotoSans-Regular.ttf" : "NotoSans-Medium.ttf", size);
+    }
+#endif
     if (font) {
         font->fallback = fallback_font(size);
     }
     return font;
-#endif
 }
 
 void AssetManager::add_root_if_valid(std::filesystem::path path) {

@@ -65,6 +65,18 @@ uint32_t map_control_key(SDL_Keycode key) {
         case SDLK_4:
         case SDLK_KP_4:
             return '4';
+        case SDLK_5:
+        case SDLK_KP_5:
+            return '5';
+        case SDLK_6:
+        case SDLK_KP_6:
+            return '6';
+        case SDLK_7:
+        case SDLK_KP_7:
+            return '7';
+        case SDLK_8:
+        case SDLK_KP_8:
+            return '8';
         default:
             return 0;
     }
@@ -126,7 +138,7 @@ bool DesktopSimulatorFrame::initialize_sdl() {
         return false;
     }
 
-    window_ = SDL_CreateWindow("Template App",
+    window_ = SDL_CreateWindow("CardTube",
                                SDL_WINDOWPOS_CENTERED,
                                SDL_WINDOWPOS_CENTERED,
                                kWidth,
@@ -365,8 +377,9 @@ void DesktopSimulatorFrame::handle_event(const SDL_Event& event, bool& running) 
             return;
         }
         case SDL_MOUSEWHEEL:
-            encoder_diff_ = static_cast<int16_t>(-event.wheel.y);
-            lv_indev_read(encoder_);
+            // Route the wheel to list navigation (the videos list is virtualized
+            // and no longer uses the focus group).
+            platform::emit_scroll(-event.wheel.y);
             return;
         case SDL_KEYDOWN:
         case SDL_KEYUP: {
@@ -387,7 +400,7 @@ void DesktopSimulatorFrame::handle_event(const SDL_Event& event, bool& running) 
                 std::copy_n(reinterpret_cast<const uint8_t*>(cursor),
                             std::min<uint32_t>(length, sizeof(key)),
                             reinterpret_cast<uint8_t*>(&key));
-                if (keypad_ && key != '4') {
+                if (keypad_ && (key < '4' || key > '8')) {
                     keypad_->emit_key(key);
                 }
                 cursor += length;

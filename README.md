@@ -10,14 +10,14 @@
     />
   <img
     src="./screenshot/app-simulator-light-darwin.png"
-    alt="CardputerZero Template running in the desktop simulator"
+    alt="CardTube running in the desktop simulator"
     width="315"
   />
   </picture>
 </p>
 
 <div align="center">
-    <h1>CardputerZero Application Template</h1>
+    <h1>CardTube</h1>
 </div>
 
 <div align="center">
@@ -52,10 +52,63 @@ In this example project, we used small MVVM-style structure around LVGL:
 - **Data flow**: user input triggers widget callbacks, callbacks update `BaseViewModel`, view model publishes subjects, and bound UI objects refresh automatically through LVGL observers.
 - **Platform layer**: platform code owns Linux input integration and other hardware-facing services. The nav bar maps hardware/keyboard keys `4` to `8`, plus `ESC` for quit.
 
-Current demo UI:
+Current application: **CardTube** — a YouTube audio downloader and player.
 
-- Page 1: Hello World, font weight toggle, LVGL version info, light/dark theme toggle, page navigation.
-- Page 2: Counter page, increment/decrement actions, simple page navigation.
+- **Library page**: the list of channels you follow. `+` adds a channel from a
+  link or `@handle`, `ENTER` opens it, `7` (trash icon) or `DEL` removes it
+  (a confirmation is shown first).
+- **Videos page**: the latest uploads of the selected channel. Each row shows a
+  state icon: downloaded, downloading (with percentage) or not downloaded.
+  `ENTER` plays a video or downloads it first; `6` plays, `7` downloads, `5`
+  refreshes the list, `DEL` deletes the local file.
+- **Player page**: now-playing view with a progress bar, elapsed/total time and
+  transport controls. `LEFT`/`RIGHT` seek by 10 seconds.
+- **Storage & info page**: reached with `8` from the library. Shows the number of
+  downloaded tracks, their total size, the video-list cache size and free space,
+  then a list of downloads with per-item sizes. `7` or `DEL` removes the selected
+  download, `4`/`ESC` goes back.
+
+The navigation bar maps keys `4`-`8` left to right with a consistent meaning:
+
+| Key | Meaning |
+| --- | --- |
+| `4` | Back / up (Add channel on the library page) |
+| `5` | Refresh the current list (Previous on the player) |
+| `6` | Open / play the highlighted item (Play/pause on the player) |
+| `7` | Download / remove / delete the highlighted item (Next on the player) |
+| `8` | Player / info: Now playing, Storage & info (Stop on the player) |
+
+- **Add channel dialog**: a modal text input. Type a channel URL, `@handle`,
+  `UC…` channel id or `youtube.com/...` and press `ENTER` to save, `ESC` to
+  cancel.
+
+The navigation bar maps hardware/keyboard keys `4`-`8` from left to right and
+changes with the current page. Hold `ESC` on the library page to quit.
+
+### External tools and data
+
+CardTube shells out to `yt-dlp` for listing and downloading and to an external
+player for playback (mpv recommended). See [`tools/README.md`](tools/README.md)
+for the search order and how to bundle the binaries. The simulator runs on
+Windows through SDL and needs `tools/yt-dlp.exe` plus a player such as mpv.
+
+Runtime locations:
+
+| Item | Desktop (Windows) | Device (Linux) |
+| --- | --- | --- |
+| Channels file | `%APPDATA%\cardtube\channels.tsv` | `$XDG_CONFIG_HOME/cardtube/channels.tsv` |
+| Downloads | `%LOCALAPPDATA%\cardtube\media` | `$XDG_DATA_HOME/cardtube/media` |
+| Video-list cache | `%LOCALAPPDATA%\cardtube\cache` | `$XDG_DATA_HOME/cardtube/cache` |
+
+Override any of them with `CARDTUBE_CONFIG_DIR`, `CARDTUBE_MEDIA_DIR`,
+`CARDTUBE_CACHE_DIR`, `CARDTUBE_YTDLP` and `CARDTUBE_PLAYER`.
+
+The latest video list of every channel is cached, so a channel stays browsable
+and playable while offline: opening it shows the saved list immediately with the
+downloaded items marked, and only refreshes from the network when a connection
+is available. The status bar shows `Offline - showing saved list` when a cached
+list is being used.
+
 
 ## Repository Layout
 
@@ -104,9 +157,9 @@ Common CMake cache options:
 | Option | Default | Description |
 | --- | --- | --- |
 | `USE_DESKTOP` | `ON` | Build SDL desktop simulator when `ON`; build embedded Linux target when `OFF`. |
-| `APP_NAME` | `template_app` | Application name used by installed asset lookup. |
+| `APP_NAME` | `cardtube` | Application name used by installed asset lookup. |
 | `APP_ASSETS_ROOT` | empty | Optional runtime asset root. Expected layout includes `fonts/`, `images/`, etc. |
-| `APP_CONFIG_FILE` | platform default | Optional config path. Defaults to `config/template-app.conf` for desktop builds and `/etc/template-app.conf` for device builds. |
+| `APP_CONFIG_FILE` | platform default | Optional config path. Defaults to `config/cardtube.conf` for desktop builds and `/etc/cardtube.conf` for device builds. |
 | `APP_KEY_INPUT_DEVICE` | empty | Optional Linux evdev device path, e.g. `/dev/input/event0`. Empty means auto-scan `/dev/input/event*`. |
 | `APP_FRAMEBUFFER_DEVICE` | `/dev/fb0` | Linux framebuffer device used by embedded builds when `APP_USE_DRM=OFF`. |
 | `APP_USE_DRM` | `OFF` | Use LVGL's Linux DRM/KMS backend instead of fbdev for embedded builds. |
@@ -119,18 +172,9 @@ Asset lookup order:
 2. source-tree `assets/` for development
 3. `/usr/share/<APP_NAME>/` for installed deployments
 
-Theme startup behavior is configured in `config/template-app.conf`:
-
-```ini
-[application]
-dark_mode=yes
-```
-
-Set `dark_mode` to `yes` or `no`. The parser also accepts `true`/`false` and `1`/`0`.
-Installed device builds use `/etc/template-app.conf` as the system default. Changing the theme
-from the navigation bar (keyboard shortcut `6`) writes a per-user override to
-`$XDG_CONFIG_HOME/template-app/template-app.conf`, or `~/.config/template-app/template-app.conf`
-when `XDG_CONFIG_HOME` is not set. The per-user file takes precedence on the next launch.
+The application is **dark-theme only**; the light theme and its toggle were removed.
+The `dark_mode` value in `config/cardtube.conf` is still parsed for compatibility but
+the app always starts and runs in dark mode.
 
 ## Desktop Builds
 
@@ -190,9 +234,9 @@ cmake --build --preset linux-x86-64-dbg
 Run:
 
 ```shell
-./build/linux-x86-64/Debug/template_app
+./build/linux-x86-64/Debug/cardtube
 # or launch release build
-# ./build/linux-x86-64/Release/template_app
+# ./build/linux-x86-64/Release/cardtube
 ```
 
 ### macOS Desktop
@@ -235,9 +279,9 @@ cmake --build --preset darwin-arm64-dbg
 Run:
 
 ```shell
-./build/darwin-arm64/Debug/template_app
+./build/darwin-arm64/Debug/cardtube
 # or launch release build
-# ./build/darwin-arm64/Release/template_app
+# ./build/darwin-arm64/Release/cardtube
 ```
 
 For Intel macOS, use the `darwin-x86-64` configure preset and matching build preset:
@@ -247,9 +291,9 @@ cmake --preset darwin-x86-64
 cmake --build --preset darwin-x86-64-dbg
 # alternatively, you can run release build
 # cmake --build --preset darwin-x86-64-rel
-./build/darwin-x86-64/Debug/template_app
+./build/darwin-x86-64/Debug/cardtube
 # or launch release build
-# ./build/darwin-x86-64/Release/template_app
+# ./build/darwin-x86-64/Release/cardtube
 ```
 
 ### Windows Desktop
@@ -315,11 +359,11 @@ Configure and build with MSVC:
 ```powershell
 cmake --preset win32-msvc
 cmake --build --preset win32-msvc-dbg
-.\build\msvc\Debug\template_app.exe
+.\build\msvc\Debug\cardtube.exe
 
 # alternatively for release build
 # cmake --build --preset win32-msvc-rel
-# .\build\msvc\Release\template_app.exe
+# .\build\msvc\Release\cardtube.exe
 ```
 
 Configure and build with MinGW-w64:
@@ -344,11 +388,11 @@ Configure and build with MinGW-w64:
 ```powershell
 cmake --preset win32-mingw64
 cmake --build --preset win32-mingw64-dbg
-.\build\mingw64\Debug\template_app.exe
+.\build\mingw64\Debug\cardtube.exe
 
 # alternatively for release build
 # cmake --build --preset win32-mingw64-rel
-#.\build\mingw64\Release\template_app.exe
+#.\build\mingw64\Release\cardtube.exe
 ```
 > [!NOTE]
 > `VCPKG` will handle the dependencies during CMake configuration process automatically, 
@@ -402,32 +446,32 @@ By default, the debian package is copied to '$HOME' folder, normally it's under 
 On your device, install the copied package with `apt` and replace the package file name with the one you copied:
 
 ```shell
-sudo apt install --no-install-recommends ./TemplateApp_0.2.1_m5stack1_arm64.deb
+sudo apt install ./CardTube_0.2.1_m5stack1_arm64.deb
 ```
+
+The package declares `yt-dlp`, `mpv` and `ca-certificates` as dependencies, so `apt`
+fetches and installs them automatically during installation (a plain `dpkg -i`
+would not — it cannot resolve dependencies). `--no-install-recommends` is fine
+because these are hard dependencies, not recommendations.
 
 
 ## Development Guide
 
 ### Navigation Keys
 
-The first page bottom nav bar maps hardware/keyboard keys from left to right:
+The bottom navigation bar maps hardware/keyboard keys `4`-`8` from left to
+right. The five buttons change with the current page (library, videos, player).
 
-| Key | Nav item |
-| --- | --- |
-| `4` | First icon button |
-| `5` | Second icon button |
-| `6` | Third icon button |
-| `7` | Fourth icon button |
-| `8` | Fifth icon button |
-| `ESC` | First icon button / quit |
-
-The counter page uses direct keyboard shortcuts:
+Global shortcuts:
 
 | Key | Action |
 | --- | --- |
-| `ESC` | Return to the first page |
-| `Left` | Decrease the counter |
-| `Right` | Increase the counter |
+| `LEFT` / `RIGHT` | Move focus, or seek 10 s on the player page |
+| `ENTER` | Open / play / download the focused row |
+| `DEL` | Remove a channel or delete a downloaded file |
+| `ESC` | Back; hold on the library page to quit |
+| `H` (`FN`+`H`) | Toggle the keyboard help popup |
+| `PRSC` | Save a screenshot |
 
 ### Adding a Screen
 
@@ -446,14 +490,20 @@ The counter page uses direct keyboard shortcuts:
 
 ### Fonts and Assets
 
-Device builds use Noto Sans CJK Medium for the default bold text and Noto Sans CJK Regular for regular-weight text. They are loaded through FreeType from:
+Device builds prefer Noto Sans CJK Medium/Regular for the default bold and regular
+text. They are loaded through FreeType from:
 
 ```text
 /usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc
 /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc
 ```
 
-When either system font is unavailable, the UI falls back to LVGL's built-in Montserrat fonts. Desktop builds always use the fallback fonts. Runtime icon and other asset fonts remain under:
+Desktop builds use the bundled `NotoSans-Medium.ttf` / `NotoSans-Regular.ttf`
+(SIL OFL, in `assets/fonts/`), and device builds fall back to them when the
+system CJK font is missing. The bundled Noto Sans covers Latin, Greek and
+Cyrillic, so non-Latin channel and video names render correctly in the
+simulator. When no bundled font is found, the UI falls back to LVGL's built-in
+Montserrat fonts (Latin only). Runtime icon and other asset fonts remain under:
 
 ```text
 assets/fonts/
@@ -478,20 +528,20 @@ Debian packages are produced with CPack and written to `dist/`. The package file
 Default example:
 
 ```text
-dist/TemplateApp_0.2.1_m5stack1_arm64.deb
+dist/CardTube_0.2.1_m5stack1_arm64.deb
 ```
 
 Package layout:
 
 | Path | Content |
 | --- | --- |
-| `/usr/bin/template_app` | Application executable. |
-| `/etc/template-app.conf` | System-default application settings, including the startup theme. |
-| `/usr/share/template_app/` | Runtime assets: fonts, images, audio. |
-| `/usr/share/APPLaunch/applications/template_app.desktop` | APPLaunch launcher entry. |
+| `/usr/bin/cardtube` | Application executable. |
+| `/etc/cardtube.conf` | System-default application settings, including the startup theme. |
+| `/usr/share/cardtube/` | Runtime assets: fonts, images, audio. |
+| `/usr/share/APPLaunch/applications/cardtube.desktop` | APPLaunch launcher entry. |
 | `/usr/share/APPLaunch/share/images/template*.png` | APPLaunch launcher icons/fallbacks. |
-| `/usr/lib/systemd/system/template_app.service` | Optional systemd service for embedded autostart. |
-| `/usr/share/doc/template_app/` | README and third-party asset license notes. |
+| `/usr/lib/systemd/system/cardtube.service` | Optional systemd service for embedded autostart. |
+| `/usr/share/doc/cardtube/` | README and third-party asset license notes. |
 
 Build and package:
 
