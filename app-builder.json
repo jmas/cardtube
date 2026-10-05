@@ -2,7 +2,7 @@
   "app_name": "CardTube",
   "package_name": "cardtube",
   "bin_name": "cardtube",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "YouTube audio downloader and player for CardputerZero",
 
   "store": {

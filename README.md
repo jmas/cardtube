@@ -101,7 +101,7 @@ A Debian package is built for `arm64`. Install it with `apt` so the runtime
 tools come along automatically:
 
 ```shell
-sudo apt install ./CardTube_0.2.1_m5stack1_arm64.deb
+sudo apt install ./CardTube_0.2.2_m5stack1_arm64.deb
 ```
 
 The package declares `yt-dlp`, `mpv` and `ca-certificates` as dependencies, so
@@ -508,7 +508,7 @@ By default, the debian package is copied to `$HOME` folder, normally it's under 
 On your device, install the copied package with `apt`:
 
 ```shell
-sudo apt install ./CardTube_0.2.1_m5stack1_arm64.deb
+sudo apt install ./CardTube_0.2.2_m5stack1_arm64.deb
 ```
 
 ## Debian Package
@@ -522,7 +522,7 @@ Debian packages are produced with CPack and written to `dist/`. The package file
 Default example:
 
 ```text
-dist/CardTube_0.2.1_m5stack1_arm64.deb
+dist/CardTube_0.2.2_m5stack1_arm64.deb
 ```
 
 Build and package:
@@ -599,7 +599,7 @@ tooling:
 
 ```shell
 ./czdev login                                   # one-time GitHub device-flow login
-./czdev publish --deb dist/CardTube_0.2.1_m5stack1_arm64.deb
+./czdev publish --deb dist/CardTube_0.2.2_m5stack1_arm64.deb
 ```
 
 Store screenshots are the `320x170` PNGs in [`screenshots/`](screenshots); the
