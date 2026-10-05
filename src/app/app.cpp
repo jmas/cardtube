@@ -583,6 +583,18 @@ int Application::run() {
         // Wrap focus: up at the top jumps to the end, down at the bottom to the
         // top, instead of stopping or accumulating.
         lv_group_set_wrap(group, true);
+
+        // Text widgets (dialog textareas) only receive key input through an
+        // LVGL group: the keypad driver forwards keys to the focused object of
+        // its group. The desktop keypad assigns itself a group, but the device
+        // evdev keypad is created before this group exists, so bind every
+        // keypad indev here. Without it dialogs open but accept no typing.
+        for (lv_indev_t* indev = lv_indev_get_next(nullptr); indev != nullptr;
+             indev = lv_indev_get_next(indev)) {
+            if (lv_indev_get_type(indev) == LV_INDEV_TYPE_KEYPAD) {
+                lv_indev_set_group(indev, group);
+            }
+        }
     }
 
     auto* standard_font = assets.load_standard_font(14);
